@@ -15,7 +15,7 @@
     3. Currently, the code sets up a graph which follows this tree-like structure: https://snipboard.io/6BhxRd.jpg
        Change it to plan a path from node 0 to node 7 over this graph instead: https://snipboard.io/VIx6Er.jpg
        How do we know the graph is no longer a tree? - since 2 is part of the left branch and 5 is part of the right branch, but they both connect to 7
-       Does Breadth-first Search still find the optimal path?
+       Does Breadth-first Search still find the optimal path? - yes
        
  CHALLENGE:
     1. Make a new graph where there is a cycle. DFS should fail. Does it? Why?
