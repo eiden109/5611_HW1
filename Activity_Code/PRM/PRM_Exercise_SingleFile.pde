@@ -10,25 +10,25 @@ TODO:
      [Hint: Look at setup() to see how I place obstacles, build the PRM, and run the BFS]
   2. Currently edge connections of any length are allowed. Update the connectNeighbors()
      function to only allow edges if their length is less than 200 pixels. What use is there
-     for this? Why do you think people sometimes put a maximum length on PRM edges?
+     for this? Why do you think people sometimes put a maximum length on PRM edges? - DONE - most likely to make reasonable paths, rather than straight shots
   3. The function, closestNode() is supposed to return the ID of the PRM node 
      that is closest to the passed-in point. However, it currently returns a 
      random node. Once you fix the function, you should see that clicking with 
-     the mouse lets you select the red goal node.
+     the mouse lets you select the red goal node. - DONE
   4. You can see we define a box obstacle with a top left corner, and a width and height.
      I have already written code to draw this box with the rect() command. Uncomment
-     the code, to see the box drawn.
+     the code, to see the box drawn. - DONE
   5. For the PRM to be collision free wrt the box we need to make sure no nodes are
      inside and box, and that none of the between-none edges between nodes intersect the box:
-       A. Complete in the pointInBox() routine in the CollisionLibrary
+       A. Complete in the pointInBox() routine in the CollisionLibrary - DONE
        B. Use pointInBox() inside generateRandomNodes() to ensure all PRM nodes
-          generated are outside of the box
+          generated are outside of the box - DONE
        C. Use the already existing rayBoxIntersect() to test the edges between 
-          PRM nodes with the box
+          PRM nodes with the box - DONE
     Test each sub-step individually. If all three work, the planned path should
-    be collision free with all of the circles and the box.
+    be collision free with all of the circles and the box. - DONE
   6. Pressing the arrow keys will move the pink box. Update the code to make
-    sure the PRM and the planned path get updated as the box moves.
+    sure the PRM and the planned path get updated as the box moves. - DONE
     
 Challenge:
   1. Add support for a list of rectangle obstacles.
@@ -83,8 +83,8 @@ void draw(){
   
   //Draw the box obstacles
   //TODO: Uncomment this to draw the box
-  //fill(250,200,200);
-  //rect(boxTopLeft.x, boxTopLeft.y, boxW, boxH);
+  fill(250,200,200);
+  rect(boxTopLeft.x, boxTopLeft.y, boxW, boxH);
   
   //Draw PRM Nodes
   fill(0);
@@ -131,21 +131,37 @@ void keyPressed(){
   
   if (keyCode == RIGHT){
     boxTopLeft.x += 10;
+    connectNeighbors();
+    runBFS(closestNode(startPos),closestNode(goalPos));
   }
   if (keyCode == LEFT){
     boxTopLeft.x -= 10;
+    connectNeighbors();
+    runBFS(closestNode(startPos),closestNode(goalPos));
   }
   if (keyCode == UP){
     boxTopLeft.y -= 10;
+    connectNeighbors();
+    runBFS(closestNode(startPos),closestNode(goalPos));
   }
   if (keyCode == DOWN){
     boxTopLeft.y += 10;
+    connectNeighbors();
+    runBFS(closestNode(startPos),closestNode(goalPos));
   }
 }
 
 int closestNode(Vec2 point){
   //TODO: Return the closest node the passed in point
-  return int(random(numNodes));
+  float smallest = 100000;
+  int id = -1;
+  for (int i = 0; i < numNodes; i++){
+    if (nodePos[i].distanceTo(point) < smallest) {
+      smallest = nodePos[i].distanceTo(point);
+      id = i;
+    }
+  }
+  return id;
 }
 
 void mousePressed(){
@@ -163,6 +179,10 @@ void mousePressed(){
 //Returns true if the point is inside a box
 boolean pointInBox(Vec2 boxTopLeft, float boxW, float boxH, Vec2 pointPos){
   //TODO: Return true if the point is actually inside the box
+  
+  if ((pointPos.x >= boxTopLeft.x && pointPos.x <= boxTopLeft.x + boxW) && (pointPos.y >= boxTopLeft.y && pointPos.y <= boxTopLeft.y + boxH)) {
+    return true;
+  }
   return false;
 }
 
@@ -318,9 +338,11 @@ void generateRandomNodes(Vec2[] circleCenters, float[] circleRadii, Vec2 boxTopL
   for (int i = 0; i < numNodes; i++){
     Vec2 randPos = new Vec2(random(width),random(height));
     boolean insideAnyCircle = pointInCircleList(circleCenters,circleRadii,randPos);
-    while (insideAnyCircle){
+    boolean insideBox = pointInBox(boxTopLeft, boxW, boxH, randPos);
+    while (insideAnyCircle || insideBox){
       randPos = new Vec2(random(width),random(height));
       insideAnyCircle = pointInCircleList(circleCenters,circleRadii,randPos);
+      insideBox = pointInBox(boxTopLeft, boxW, boxH, randPos);
     }
     nodePos[i] = randPos;
   }
@@ -335,9 +357,12 @@ void connectNeighbors(){
       if (i == j) continue; //don't connect to myself 
       Vec2 dir = nodePos[j].minus(nodePos[i]).normalized();
       float distBetween = nodePos[i].distanceTo(nodePos[j]);
-      hitInfo circleListCheck = rayCircleListIntesect(circlePos, circleRad, nodePos[i], dir, distBetween);
-      if (!circleListCheck.hit){
-        neighbors[i].add(j);
+      if (distBetween < 200) {
+        hitInfo circleListCheck = rayCircleListIntesect(circlePos, circleRad, nodePos[i], dir, distBetween);
+        hitInfo boxCheck = rayBoxIntersect(boxTopLeft, boxW, boxH, nodePos[i], dir, distBetween);
+        if (!circleListCheck.hit && !boxCheck.hit){
+          neighbors[i].add(j);
+        }
       }
     }
   }
