@@ -1,4 +1,4 @@
-# 5611_HW1
+# 5611_HW1 - Aaron Eiden
 
 All Activities were done individually.
 
